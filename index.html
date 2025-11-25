@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Futures Asset Multi Final</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="mobile-container">
+        <div class="header-tabs">
+            <span>Ringkasan</span>
+            <span class="active">Futures</span>
+            <span>Earn</span>
+            <span>Spot</span>
+            <span>Pendanaan</span>
+        </div>
+
+        <div class="sub-header">
+            <span class="sub-tab active">USDⓈ-M</span>
+            <span class="sub-tab">COIN-M</span>
+            <span class="sub-tab">Option</span>
+        </div>
+
+        <div class="balance-section">
+            <div class="balance-header">
+                <span>Saldo Margin <i class="far fa-eye"></i></span>
+                <div>
+                    <i class="fas fa-exchange-alt" style="transform: rotate(90deg); margin-right: 10px;"></i>
+                    <i class="far fa-file-alt"></i>
+                </div>
+            </div>
+            <div class="main-balance">
+                <span id="disp-wallet-total">0.00</span> <small>USDT</small>
+                <i class="fas fa-caret-down" style="font-size: 14px; color: #fff;"></i>
+            </div>
+            <div class="sub-balance">
+                ≈ Rp<span id="disp-wallet-idr">0</span>
+            </div>
+            <div class="pnl-day">
+                PnL Terealisasi Hari Ini <span class="text-red" id="disp-daily-pnl">-0.13(-1.72%)</span> <i class="fas fa-chevron-right" style="font-size: 10px;"></i>
+            </div>
+        </div>
+
+        <div class="wallet-grid">
+            <div class="grid-item">
+                <label>Saldo Dompet (USDT)</label>
+                <span id="disp-wallet-balance">7.41</span>
+                <span class="sub-val">≈ Rp<span id="disp-wallet-balance-idr">123,623.84</span></span>
+            </div>
+            <div class="grid-item">
+                <label>PNL Belum Terealisasi (USDT)</label>
+                <span id="disp-unrealized-total">1.44</span>
+                <span class="sub-val">≈ Rp<span id="disp-unrealized-idr">24,034.97</span></span>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-yellow">Dagang</button>
+            <button class="btn btn-gray">Swap</button>
+            <button class="btn btn-gray">Transfer</button>
+        </div>
+
+        <div class="promo-list">
+            <div class="promo-item">
+                <div class="promo-left">
+                    <img id="icon-bnb" src="" class="custom-icon">
+                    <span>Diskon BNB 10%</span>
+                </div>
+                <div class="toggle-switch"></div>
+            </div>
+            <div class="promo-item">
+                <div class="promo-left">
+                    <img id="icon-bfusd" src="" class="custom-icon">
+                    <span>Penghasilan BFUSD</span>
+                </div>
+                <div class="promo-right" style="color: var(--text-gray);">
+                    APY --% <i class="fas fa-chevron-right" style="font-size: 10px;"></i>
+                </div>
+            </div>
+            <div class="promo-item">
+                <div class="promo-left">
+                    <img id="icon-ldusdt" src="" class="custom-icon">
+                    <span>Penghasilan LDUSDT</span>
+                </div>
+                <div class="promo-right" style="color: var(--text-gray);">
+                    APY 1.88% <i class="fas fa-chevron-right" style="font-size: 10px;"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="position-tabs">
+            <span class="p-tab active">Posisi</span>
+            <span class="p-tab">Aset</span>
+        </div>
+
+        <div id="positions-container">
+            </div>
+
+        <div class="footer">
+            <div class="nav-item" onclick="toggleDashboard()">
+                <i class="fas fa-home nav-icon"></i>
+                <span>Beranda</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-chart-bar nav-icon"></i>
+                <span>Pasar</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-exchange-alt nav-icon"></i>
+                <span>Perdagangan</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-file-contract nav-icon"></i>
+                <span>Futures</span>
+            </div>
+            <div class="nav-item active">
+                <i class="fas fa-wallet nav-icon"></i>
+                <span>Aset</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="editor-dashboard">
+        <h2>Edit Dashboard</h2>
+        
+        <div class="edit-group">
+            <label>Kurs 1 USDT (IDR)</label>
+            <input type="number" id="in-rate" class="global-input" value="16690">
+        </div>
+        <hr style="border-color: #444; margin: 10px 0;">
+        <div class="edit-group">
+            <label>Saldo Dompet (USDT)</label>
+            <input type="number" id="in-wallet" class="global-input" value="7.41">
+        </div>
+        
+        <div class="edit-group">
+            <label>PnL Terealisasi Hari Ini (Teks)</label>
+            <input type="text" id="in-daily-pnl" class="global-input" value="-0.13(-1.72%)">
+        </div>
+        <hr style="border-color: #444; margin: 10px 0;">
+        
+        <h3>URL Ikon Bawah (Promo)</h3>
+        <div class="edit-group">
+            <label>Icon Diskon BNB (URL)</label>
+            <input type="text" id="in-url-bnb" class="global-input" value="https://cryptologos.cc/logos/bnb-bnb-logo.png?v=025">
+        </div>
+        <div class="edit-group">
+            <label>Icon BFUSD (URL)</label>
+            <input type="text" id="in-url-bfusd" class="global-input" value="https://cryptologos.cc/logos/usd-coin-usdc-logo.png?v=025">
+        </div>
+        <div class="edit-group">
+            <label>Icon LDUSDT (URL)</label>
+            <input type="text" id="in-url-ldusdt" class="global-input" value="https://cryptologos.cc/logos/tether-usdt-logo.png?v=025">
+        </div>
+
+        <hr style="border-color: #444; margin: 20px 0;">
+        <h3>Daftar Posisi</h3>
+        <div id="editor-positions-list">
+            </div>
+
+        <button class="btn-add" onclick="addNewPosition()">+ Tambah Posisi</button>
+
+        <button class="close-btn" onclick="toggleDashboard()">Tutup & Simpan</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
