@@ -1,19 +1,20 @@
 // Data Awal
+// Catatan: 'size' tetap disimpan sebagai data inti untuk perhitungan PNL
+// Tapi 'margin' yang akan diedit user, lalu size menyesuaikan.
 let positions = [
     {
         id: 1,
         coin: "PLUMEUSDT",
         side: "SHORT",
         leverage: 40,
-        size: 1000,
+        size: 1000, // Ini hasil dari Margin 25 x Leverage 40
         entry: 0.0246300,
         mark: 0.0241848,
-        liq: 0.0266777,
         tpsl: "0.0223000 / 0.0255000"
     }
 ];
 
-// Fungsi Helper Format Uang
+// Fungsi Helper Format Uang (Ribuan Koma, Desimal Titik)
 function formatMoney(amount, decimalCount = 2, decimal = ".", thousands = ",") {
     try {
         decimalCount = Math.abs(decimalCount);
@@ -25,19 +26,36 @@ function formatMoney(amount, decimalCount = 2, decimal = ".", thousands = ",") {
     } catch (e) { console.log(e) }
 }
 
+// Fungsi Hitung Harga Likuidasi Otomatis
+function calculateLiquidation(entry, leverage, side) {
+    // Rumus penyederhanaan (Estimasi Maintenance Margin ~0.5% - 1%)
+    // Faktor 0.9 digunakan untuk memberi jarak sedikit dari harga kebangkrutan (Bankruptcy Price)
+    const factor = 0.9 / leverage; 
+    
+    if (side === 'LONG') {
+        // Long: Likuidasi di bawah harga entri
+        return entry * (1 - factor);
+    } else {
+        // Short: Likuidasi di atas harga entri
+        return entry * (1 + factor);
+    }
+}
+
 // Render UI Utama (Kartu Posisi)
 function renderMainInterface() {
     const container = document.getElementById('positions-container');
     container.innerHTML = ''; // Clear
 
     positions.forEach((pos, index) => {
-        // Kalkulasi Logika Tampilan
+        // 1. Logika Tampilan Dasar
         const isShort = pos.side === 'SHORT';
         const sideColor = isShort ? '#f6465d' : '#0ecb81';
         const sideChar = isShort ? 'S' : 'L';
         
-        // Kalkulasi PNL untuk Tampilan
+        // 2. Kalkulasi Margin & Size
         const margin = pos.size / pos.leverage;
+
+        // 3. Kalkulasi PNL
         let pnl = 0;
         if(pos.entry > 0) {
             if(isShort) {
@@ -46,21 +64,26 @@ function renderMainInterface() {
                 pnl = pos.size * ((pos.mark - pos.entry) / pos.entry);
             }
         }
+        
+        // 4. Kalkulasi ROI %
         let roi = (margin > 0) ? (pnl / margin) * 100 : 0;
 
-        const pnlColor = pnl >= 0 ? '#0ecb81' : '#f6465d';
-        
-        // Kalkulasi Risk Ratio
+        // 5. Kalkulasi Harga Likuidasi (OTOMATIS)
+        const liqPrice = calculateLiquidation(pos.entry, pos.leverage, pos.side);
+
+        // 6. Kalkulasi Rasio Margin (Simulasi Risiko)
         const walletVal = parseFloat(document.getElementById('in-wallet').value) || 0;
         const totalEquity = walletVal + pnl; 
         const risk = (totalEquity > 0) ? (margin / totalEquity) * 10 : 0;
+        
+        // Warna PNL
+        const pnlColor = pnl >= 0 ? '#0ecb81' : '#f6465d';
 
         const html = `
         <div class="position-card">
             <div class="card-header">
                 <div class="pair-info">
                     <div class="side-icon-box" style="background-color: ${sideColor}">${sideChar}</div>
-                    
                     <span class="pair-name">${pos.coin}</span>
                     <span class="tag-perp">Perp</span>
                     <span class="leverage-badge">Cross ${pos.leverage}x</span>
@@ -103,7 +126,7 @@ function renderMainInterface() {
                 </div>
                 <div class="d-item d-right">
                     <label>Harga Lik. (USDT)</label>
-                    <span>${formatMoney(pos.liq, 7, '.', ',')}</span>
+                    <span>${formatMoney(liqPrice, 7, '.', ',')}</span>
                 </div>
             </div>
 
@@ -125,6 +148,9 @@ function renderEditorInterface() {
     container.innerHTML = '';
 
     positions.forEach((pos, index) => {
+        // Hitung Margin saat ini untuk ditampilkan di input
+        const currentMargin = pos.size / pos.leverage;
+
         const html = `
         <div class="pos-block">
             <div class="pos-block-header">
@@ -142,27 +168,26 @@ function renderEditorInterface() {
                     <option value="LONG" ${pos.side === 'LONG' ? 'selected' : ''}>Long (Hijau)</option>
                 </select>
             </div>
+            
             <div class="edit-group">
-                <label>Leverage</label>
+                <label>Leverage (x)</label>
                 <input type="number" value="${pos.leverage}" oninput="updatePos(${index}, 'leverage', this.value)">
             </div>
             <div class="edit-group">
-                <label>Ukuran (USDT)</label>
-                <input type="number" value="${pos.size}" oninput="updatePos(${index}, 'size', this.value)">
+                <label>Margin (USDT)</label>
+                <input type="number" value="${currentMargin}" oninput="updatePos(${index}, 'margin', this.value)">
             </div>
+
             <div class="edit-group">
-                <label>Entry Price</label>
+                <label>Harga Entry</label>
                 <input type="number" value="${pos.entry}" step="0.0000001" oninput="updatePos(${index}, 'entry', this.value)">
             </div>
             <div class="edit-group">
-                <label>Mark Price</label>
+                <label>Harga Mark</label>
                 <input type="number" value="${pos.mark}" step="0.0000001" oninput="updatePos(${index}, 'mark', this.value)">
             </div>
+            
             <div class="edit-group">
-                <label>Liq Price</label>
-                <input type="number" value="${pos.liq}" step="0.0000001" oninput="updatePos(${index}, 'liq', this.value)">
-            </div>
-             <div class="edit-group">
                 <label>TP/SL Text</label>
                 <input type="text" value="${pos.tpsl}" oninput="updatePos(${index}, 'tpsl', this.value)">
             </div>
@@ -174,12 +199,31 @@ function renderEditorInterface() {
 
 // Update Data Posisi dari Input
 function updatePos(index, field, value) {
+    const val = parseFloat(value) || 0;
+
     if(field === 'coin' || field === 'side' || field === 'tpsl') {
         positions[index][field] = value;
-    } else {
-        positions[index][field] = parseFloat(value) || 0;
+    } 
+    else if (field === 'margin') {
+        // Jika User ubah MARGIN -> Update SIZE
+        // Rumus: Size = Margin Baru * Leverage
+        positions[index].size = val * positions[index].leverage;
     }
-    // Re-render Main UI only
+    else if (field === 'leverage') {
+        // Jika User ubah LEVERAGE -> Update SIZE (Asumsi Margin tetap, daya beli naik)
+        // Hitung margin lama dulu
+        let oldMargin = positions[index].size / positions[index].leverage;
+        // Set leverage baru
+        positions[index].leverage = val;
+        // Hitung size baru = Margin Lama * Leverage Baru
+        positions[index].size = oldMargin * val;
+    }
+    else {
+        // Update Entry, Mark
+        positions[index][field] = val;
+    }
+    
+    // Re-render Main UI saja agar input editor tidak reset/hilang fokus
     renderMainInterface();
 }
 
@@ -190,10 +234,9 @@ function addNewPosition() {
         coin: "BTCUSDT",
         side: "LONG",
         leverage: 20,
-        size: 1000,
+        size: 2000, // Margin 100 x 20
         entry: 50000,
         mark: 51000,
-        liq: 45000,
         tpsl: "-- / --"
     });
     renderEditorInterface();
@@ -214,20 +257,17 @@ function updateGlobalTotals() {
     const wallet = parseFloat(document.getElementById('in-wallet').value) || 0;
     const rate = parseFloat(document.getElementById('in-rate').value) || 0;
     
-    // --- Update PnL Harian (Fitur Baru) ---
+    // Update PnL Harian Teks
     const dailyPnlText = document.getElementById('in-daily-pnl').value;
     const dailyPnlDisp = document.getElementById('disp-daily-pnl');
     dailyPnlDisp.innerText = dailyPnlText;
-    
-    // Logika Warna PnL Harian (Merah jika ada "-", Hijau jika tidak)
     if (dailyPnlText.includes('-')) {
         dailyPnlDisp.className = 'text-red';
     } else {
         dailyPnlDisp.className = 'text-green';
     }
-    // ---------------------------------------
 
-    // Hitung Total PNL dari semua posisi
+    // Hitung Total PNL Global
     let totalUnrealizedPNL = 0;
 
     positions.forEach(pos => {
@@ -244,7 +284,7 @@ function updateGlobalTotals() {
 
     const totalMarginBalance = wallet + totalUnrealizedPNL;
 
-    // Update DOM Header Elements dengan Format Uang
+    // Update Elemen HTML Header
     document.getElementById('disp-wallet-balance').innerText = formatMoney(wallet, 2, '.', ',');
     document.getElementById('disp-wallet-balance-idr').innerText = formatMoney(wallet * rate, 2, '.', ',');
 
@@ -254,7 +294,7 @@ function updateGlobalTotals() {
     document.getElementById('disp-wallet-total').innerText = formatMoney(totalMarginBalance, 2, '.', ',');
     document.getElementById('disp-wallet-idr').innerText = formatMoney(totalMarginBalance * rate, 2, '.', ',');
     
-    // Update Promo Icons
+    // Update Icon Promo
     document.getElementById('icon-bnb').src = document.getElementById('in-url-bnb').value;
     document.getElementById('icon-bfusd').src = document.getElementById('in-url-bfusd').value;
     document.getElementById('icon-ldusdt').src = document.getElementById('in-url-ldusdt').value;
